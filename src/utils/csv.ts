@@ -51,9 +51,30 @@ export const fetchAndParseCSV = async (sheetId: string, sheetName: string) => {
 
         // Map remaining rows to objects using the unique headers
         const data = rows.slice(1).map(row => {
-          const obj: Record<string, string> = {};
+          const obj: Record<string, any> = {};
           uniqueHeaders.forEach((header, index) => {
-            obj[header] = row[index] !== undefined ? String(row[index]) : '';
+            let val: any = row[index] !== undefined ? String(row[index]).trim() : '';
+            
+            // Detect and parse Indonesian number formats for correct sorting/filtering
+            const idNumberRegex = /^-?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?%?$/;
+            if (val && idNumberRegex.test(val) && !/^0\d+/.test(val)) {
+              let cleanVal = val.replace(/\./g, '').replace(/,/g, '.');
+              const isPercent = cleanVal.endsWith('%');
+              if (isPercent) {
+                cleanVal = cleanVal.slice(0, -1);
+              }
+              const num = Number(cleanVal);
+              if (!isNaN(num)) {
+                val = isPercent ? num / 100 : num;
+              }
+            } else if (val) {
+              const num = Number(val);
+              if (!isNaN(num) && !/^0\d+/.test(val)) {
+                val = num;
+              }
+            }
+
+            obj[header] = val;
           });
           return obj;
         });

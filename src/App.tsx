@@ -6,6 +6,19 @@ import { useDebounce } from './hooks/useDebounce';
 import { RefreshCw, Search, X } from 'lucide-react';
 import type { Theme } from 'simple-table-core';
 
+const formatID = (val: number, isPercent: boolean) => {
+  let numToFormat = isPercent ? val * 100 : val;
+  let strNum = numToFormat.toString();
+  if (strNum.includes('.')) {
+    strNum = parseFloat(numToFormat.toFixed(4)).toString();
+  }
+  let parts = strNum.split('.');
+  let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  let decPart = parts[1] || '';
+  let result = decPart ? `${intPart},${decPart}` : intPart;
+  return isPercent ? `${result}%` : result;
+};
+
 export default function App() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,13 +62,36 @@ export default function App() {
     // Extract keys from the first object
     const keys = Object.keys(data[0]);
     
-    return keys.map((key) => ({
-      label: key,
-      accessor: key,
-      sortable: true,
-      filterable: true,
-      width: 150, // default width
-    } as ReactColumnDef<any>));
+    return keys.map((key) => {
+      // Determine the column type by looking at the first non-empty value
+      let type: 'string' | 'number' = 'string';
+      for (let i = 0; i < Math.min(data.length, 50); i++) {
+        const val = data[i][key];
+        if (val !== '' && val !== null && val !== undefined) {
+          type = typeof val === 'number' ? 'number' : 'string';
+          break;
+        }
+      }
+
+      return {
+        label: key,
+        accessor: key,
+        type,
+        sortable: true,
+        filterable: true,
+        width: 150, // default width
+        valueFormatter: ({ value, accessor }) => {
+          if (typeof value === 'number') {
+            // If it's a number, format it nicely
+            // We use simple heuristics to decide if it's a percentage if we didn't parse it as one explicitly, 
+            // but our CSV parser already normalizes it. We'll format as ID format.
+            const isPercentage = String(accessor).toLowerCase().includes('%') || String(accessor).toLowerCase().includes('persen') || (value > 0 && value < 1 && value.toString().length > 3); // simple heuristic if not in name
+            return formatID(value, isPercentage);
+          }
+          return value;
+        }
+      } as ReactColumnDef<any>;
+    });
   }, [data]);
 
   return (
