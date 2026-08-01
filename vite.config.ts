@@ -5,8 +5,8 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    // TAMBAHKAN LINE INI (Sesuai nama repositori di GitHub Anda)
-    base: '/Web-Pricelist/',
+    // Ubah base menjadi relative path agar tidak blank
+    base: './',
     
     plugins: [react(), tailwindcss()],
     resolve: {
