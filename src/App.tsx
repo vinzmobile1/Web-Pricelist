@@ -49,78 +49,13 @@ export default function App() {
     // Extract keys from the first object
     const keys = Object.keys(data[0]);
     
-    return keys.map((key) => {
-      const lowerKey = key.toLowerCase();
-      
-      // Determine type based on the first non-null/empty value for this column
-      let colType: "string" | "number" = "string";
-      for (const row of data) {
-        if (row[key] !== '' && row[key] !== null && row[key] !== undefined) {
-          if (typeof row[key] === 'number') {
-             colType = "number";
-          }
-          break;
-        }
-      }
-
-      return {
-        label: key,
-        accessor: key,
-        sortable: true,
-        filterable: true,
-        type: colType,
-        width: 150, // default width
-        valueFormatter: ({ value }) => {
-          if (value === null || value === undefined || value === '') return value;
-
-          // 1. Format Dates (if it's a date string)
-          if (typeof value === 'string' && (lowerKey.includes('date') || lowerKey.includes('tanggal') || lowerKey.includes('waktu'))) {
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-              return new Intl.DateTimeFormat('id-ID', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: value.includes(':') ? '2-digit' : undefined,
-                minute: value.includes(':') ? '2-digit' : undefined,
-              }).format(date);
-            }
-          }
-
-          // 2. Format Numbers (Currency, Percentage, standard)
-          if (typeof value === 'number') {
-            // Currency
-            if (lowerKey.includes('harga') || lowerKey.includes('price') || lowerKey.includes('cost') || lowerKey.includes('fee') || lowerKey.includes('total') || lowerKey.includes('jual')) {
-              return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              }).format(value);
-            }
-
-            // Percentages
-            if (lowerKey.includes('percent') || lowerKey.includes('diskon') || lowerKey.includes('discount') || lowerKey.includes('margin') || lowerKey.includes('pct') || lowerKey.includes('komisi') || lowerKey.includes('%')) {
-              return new Intl.NumberFormat('id-ID', {
-                style: 'percent',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              }).format(value);
-            }
-
-            // Standard Number (Add thousand separators for large numbers)
-            if (value >= 1000 || value <= -1000) {
-               // Ignore IDs, codes, phone numbers, qty, etc.
-               if (!lowerKey.includes('id') && !lowerKey.includes('code') && !lowerKey.includes('phone') && !lowerKey.includes('telp') && !lowerKey.includes('qty')) {
-                 return new Intl.NumberFormat('id-ID').format(value);
-               }
-            }
-          }
-
-          return value;
-        }
-      } as ReactColumnDef<any>;
-    });
+    return keys.map((key) => ({
+      label: key,
+      accessor: key,
+      sortable: true,
+      filterable: true,
+      width: 150, // default width
+    } as ReactColumnDef<any>));
   }, [data]);
 
   return (
